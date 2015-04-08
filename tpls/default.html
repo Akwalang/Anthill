@@ -1,0 +1,32 @@
+{{!-- use scrollable, select, checkbox --}}
+
+<!-- unbind symbol is ~ -->
+
+<div class="wrapper">
+	<div class="centerize">
+		<div class="indent">
+			<header class="even" ai:class="{values#messages.length} % 2 ? 'even' : 'odd'">
+				{{print "There is no any {lang#layout.title}" replace="name: {values#user}"}}
+			</header>
+			<section ai:click="{actions#click}">
+				{{#if "!{values#messages.length}"}}
+					<div class="row">
+						{{lang#layout.no_messages}}
+					</div>
+				{{else}}
+					<ul class="messages row">
+						{{#each "{values#messages} as idx, item"}}
+							<li ai:class="'size-' + {values#messages.length}">
+								<div ai:class="'type-' + {item.type}">
+								</div>
+								<div class="text">
+									{{../lang#layout.title}} => {{idx}}: {{item.text}}
+								</div>
+							</li>
+						{{/each}}
+					</ul>
+				{{/if}}
+			</section>
+		</div>
+	</div>
+</div>

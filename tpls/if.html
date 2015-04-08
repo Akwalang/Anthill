@@ -1,0 +1,17 @@
+
+<div class="wrapper">
+	<div class="centerize">
+		<div class="indent">
+			<section>
+				{{#if "{values#bool} === true"}}
+					{{faker.texts.description}}
+				{{elseif "_.isString({values#bool})"}}
+					Wohoo!! ElseIf is Wroking!!!!!
+					{{lang#layout.title}}
+				{{else}}
+					{{lang#layout.title}}
+				{{/if}}
+			</section>
+		</div>
+	</div>
+</div>

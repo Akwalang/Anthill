@@ -1,0 +1,54 @@
+
+<form>
+	<ul>
+		<li>
+			<input type="text" ai:bind-value="{form#text}" /> Value: {{form#text}}
+		</li>
+		<li>
+			<input type="checkbox" ai:bind-value="{form#checkbox}" /> Value: {{form#checkbox}}
+		</li>
+		<li>
+			1: <input type="radio" name="qwerty" value="1" ai:bind-value="{form#radio}" />
+			<br />
+			2: <input type="radio" name="qwerty" value="2" ai:bind-value="{form#radio}" />
+			<br />
+			3: <input type="radio" name="qwerty" value="3" ai:bind-value="{form#radio}" />
+			<br />
+			Value: {{form#radio}}
+		</li>
+		<li>
+			<input type="range" ai:min="{form#range.min}" ai:max="{form#range.max}" ai:bind-value="{form#range.current}" />
+			Value: {{form#range.current}}
+		</li>
+		<li>
+			<select ai:bind-value="{form#select.current}">
+				{{#each "{form#select.options} as index, name"}}
+					<option ai:value="{index}">{{name}}</option>
+				{{/each}}
+			</select>
+			Value: {{form#select.current}}
+		</li>
+		<li>
+			<input type="file" ai:bind-value="{form#file}" />
+			<br />
+			Value:
+			<br />
+			{{#each "{form#file} as name, value"}}
+				{{name}}: {{value}}<br />
+			{{/each}}
+		</li>
+		<li>
+			<input type="file" multiple ai:bind-value="{form#files}" />
+			<br />
+			Value:
+			<br />
+			{{#each "{form#files} as file"}}
+				<br />
+				{{#each "{file} as name, value"}}
+					{{name}}: {{value}}<br />
+				{{/each}}
+				<br />
+			{{/each}}
+		</li>
+	</ul>
+</form>

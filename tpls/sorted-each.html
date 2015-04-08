@@ -1,0 +1,17 @@
+
+<div class="wrapper">
+	<div class="centerize">
+		<div class="indent">
+			<header>
+				{{lang#layout.title}}
+			</header>
+			<section>
+				<ul>
+					{{#each "{values#sorted_list} as idx, value"}}
+						<li>{{idx}}: {{value}}</li>
+					{{/each}}
+				</ul>
+			</section>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>AnthillEvo</title>
+
+    <script src="./js/jquery-1.9.0.js" type="text/javascript"></script>
+    <script src="./js/lodash.compat.js" type="text/javascript"></script>
+	<script src="./js/anthill.js" type="text/javascript"></script>
+	<script src="./js/anthill.tpl.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+		var params = (function () {
+			var search = window.location.search.slice(1);
+
+			var result = {},
+				pairs = search.split('&');
+
+			for (var i = 0, len = pairs.length; i < len; i++) {
+				pairs[i] = pairs[i].split('=');
+				result[pairs[i][0]] = decodeURIComponent(pairs[i][1]);
+			}
+
+			return result;
+		})();
+
+		var test = function (callback) {
+			console.time('Timer');
+
+			callback();
+
+			console.timeEnd('Timer');
+		};
+
+		var tpl, live;
+
+		var data = {};
+
+		data.lang = new Ai('Model', {
+			layout: {
+				title: 'Page Title!!!',
+				no_messages: 'No messages!'
+			}
+		});
+
+		data.values = new Ai('Model', {
+			bool: true,
+			user: 'ReMonkey',
+			list: ['item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-6'],
+			messages: [
+				{type: 'error', text: 'You have an error!'},
+				{type: 'info', text: 'New message available'}
+			],
+			nested_list: [
+				['ni-1', 'ni-2', 'ni-3', 'ni-4', 'ni-5'],
+				['ni-1', 'ni-2', 'ni-3', 'ni-4', 'ni-5'],
+				['ni-1', 'ni-2', 'ni-3', 'ni-4', 'ni-5'],
+				['ni-1', 'ni-2', 'ni-3', 'ni-4', 'ni-5']
+			],
+			sorted_list: []
+		});
+
+		data.form = new Ai('Model', {
+			text: 'Some test text.',
+			checkbox: true,
+			radio: 2,
+			range: {
+				min: 1,
+				max: 10,
+				current: 5
+			},
+			select: {
+				options: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+				current: 6
+			},
+			file: {},
+			files: []
+		});
+
+		data.actions = new Ai('Model', {
+			click: function () {
+				console.log('That was a click!!!');
+			}
+		});
+
+		var sorting = function (a, b) {
+			if (a > b) return 1;
+			if (a < b) return -1;
+			return 0;
+		};
+
+		for (var i = 0, len = 100; i < len; i++) {
+			data.values.set('sorted_list.[' + i + ']', '[' + Math.floor(Math.random() * 10) + '] Test item has indes %s and i is ' + i);
+		}
+
+		data.faker = {
+			texts: {
+				description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris dapibus semper nibh, et venenatis arcu. Nam rutrum nisl quis hendrerit imperdiet. Nullam auctor iaculis egestas. Mauris vulputate tristique maximus. Integer porta luctus tempor. In eget semper arcu. Vestibulum lacinia magna eros. Donec rhoncus nisi et ultrices semper. Vivamus ut pretium arcu.'
+			}
+		};
+
+		(function ($) {
+			var firstStep = function () {
+				console.time('Timer compile');
+
+				// for (var i = 0; i < 1000; i++)
+					tpl = new TPL(defer_1.responseText);
+
+				console.timeEnd('Timer compile');
+
+				console.log('%O', tpl);
+
+				// return;
+
+				if (params.click !== undefined || params['2click'] !== undefined) {
+					$(window).on('click', handleClick);
+				}
+				else {
+					secondStep();
+				}
+			};
+
+			var secondStep = function () {
+				console.time('Timer create');
+
+				// for (var i = 0; i < 10000; i++) {
+					live = tpl(data);
+					live.appendTo('body');
+				// }
+
+				console.timeEnd('Timer create');
+			};
+
+			var handleClick = function () {
+				secondStep();
+			};
+
+			var start = function () {
+				if (params['2click'] !== undefined) {
+					$(window).one('click', firstStep);
+				}
+				else {
+					firstStep();
+				}
+			};
+
+			var defer_1 = $.get('./tpls/' + (params.tpl || 'default') + '.html'),
+				defer_2 = $.ready.promise();
+
+			$.when(defer_1, defer_2).then(start);
+		})(jQuery)
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>

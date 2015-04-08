@@ -1,0 +1,21 @@
+
+<div class="wrapper">
+	<div class="centerize">
+		<div class="indent">
+			<header>
+				{{lang#layout.title}}
+			</header>
+			<section>
+				<ul>
+					{{#each "{values#nested_list} as idx, value"}}
+						<li>
+							{{#each "{value} as idx, value"}}
+								{{../idx}} + {{idx}} + {{../value.length}}: {{value}}<br />
+							{{/each}}
+						</li>
+					{{/each}}
+				</ul>
+			</section>
+		</div>
+	</div>
+</div>

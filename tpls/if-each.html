@@ -1,0 +1,18 @@
+
+<div class="wrapper">
+	<div class="centerize">
+		<div class="indent">
+			<section>
+				{{#if "_.isArray({values#test_list})"}}
+					<ul>
+						{{#each "{values#test_list} as idx, value"}}
+							<li>{{idx}}: {{value}}</li>
+						{{/each}}
+					</ul>
+				{{else}}
+					{{faker.texts.description}}
+				{{/if}}
+			</section>
+		</div>
+	</div>
+</div>
