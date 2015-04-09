@@ -4,7 +4,7 @@
 
 	var DEBUG = true;
 
-	var version = '0.2.12';
+	var version = '0.3.0';
 
 	var EMPTY_FUNCTION = function () {};
 
@@ -1117,10 +1117,15 @@
 	var Transform = (function () {
 		var self = {};
 
-		var splitReg = /(\{[\w\.\-\/#~]+\})/;
+		var splitReg = /(`[^`]*`)/;
+		var insertReg = /(\{[\w\.\-\/#]+\})/;
+
+		var processMark = '`';
+
+		// type-`{values#messages.length} % 2 ? 'even' : 'odd'` nextgen
 
 		self.string = function (string) {
-			var i, len, result = [],
+			var i, len, _i, _len, sub, result = [],
 				paths = string.split(splitReg);
 
 			for (i = 0, len = paths.length; i < len; i++) {
@@ -1128,11 +1133,25 @@
 					continue;
 				}
 
-				if (!splitReg.test(paths[i])) {
-					paths[i] = '"' + tpl_escapeString(paths[i]) + '"';
+				if (paths[i][0] === processMark && paths[i].slice(-1) === processMark) {
+					paths[i] = '(' + paths[i].slice(processMark.length, -1 * processMark.length) + ')';
+					result.push(paths[i]);
+					continue;
 				}
 
-				result.push(paths[i]);
+				sub = paths[i].split(insertReg);
+				
+				for (_i = 0, _len = sub.length; _i < _len; _i++) {
+					if (!sub[_i].length) {
+						continue;
+					}
+
+					if (!insertReg.test(sub[_i])) {
+						sub[_i] = '"' + tpl_escapeString(sub[_i]) + '"';
+					}
+
+					result.push(sub[_i]);
+				}
 			}
 
 			return result.join(' + ');
@@ -1186,9 +1205,7 @@
 			});
 		};
 
-		self.regexp = /\{([\w\.\-\/#~]+)\}/g;
-
-		self.UNBIND_MARK = '~';
+		self.regexp = /\{([\w\.\-\/#]+)\}/g;
 
 		self.MODIFIER_PROPERTY = 'modifier';
 
@@ -1226,14 +1243,10 @@
 
 
 		self.hasUnbind = function (rule) {
-			return rule.indexOf(self.UNBIND_MARK) === 0;
+			return false;
 		};
 
 		self.removeUnbind = function (rule) {
-			if (self.hasUnbind(rule)) {
-				rule = rule.slice(self.UNBIND_MARK.length);
-			}
-
 			return rule;
 		};
 
@@ -1363,7 +1376,7 @@
 
 		compilers.index.dynamic = function (path, offset) {
 			var source = tpl_parsePath(path),
-				pattern = 'this.%s._attrs.indexes[\'%s\'][%s]';
+				pattern = 'this.%s._indexes[\'%s\'][%s]';
 
 			var index = source.attr.lastIndexOf('.');
 
@@ -1689,7 +1702,7 @@
 
 		var connector = {change: 'change', splice: 'splice', sort: 'sort'};
 
-		var reg = /(\{[\w\.\-#~]+\}) as (?:([\w\-]+),\s?)?([\w\-]+)/;
+		var reg = /(\{[\w\.\-#]+\}) as (?:([\w\-]+),\s?)?([\w\-]+)/;
 
 		var listenerChange = function (davent) {
 			if (davent.eventPath !== davent.path) {
@@ -1844,7 +1857,7 @@
 		};
 
 		worker.compile = function (fragment) {
-			Compile(fragment, fragment.rule, 'main', connector);
+			Compile(fragment, fragment.rule, 'main', connector, 'string');
 		};
 
 		worker.fn = {};
@@ -1870,7 +1883,7 @@
 		};
 
 		worker.compile = function (fragment) {
-			Compile(fragment, fragment.rule, 'main', connector);
+			Compile(fragment, fragment.rule, 'main', connector, 'string');
 
 			fragment.defaultClasses = [];
 
@@ -1918,7 +1931,7 @@
 	})(Helpers.attributes);
 
 	(function (attributes) {
-		var CROSS_PREFIX = 'pointer-';
+		var CROSS_PREFIX = 'pointer';
 
 		var CROSS_EVENTS = {};
 

@@ -15,7 +15,7 @@ Ai('Box.Model', (function () {
 		type: ext.statics.TYPE_DANGER
 	};
 
-	ext.confirm = 'yes';
+	ext.CONFIRM_WORD = 'yes';
 
 	var types = [
 		ext.statics.TYPE_INFO, 

@@ -1,11 +1,9 @@
 {{!-- use scrollable, select, checkbox --}}
 
-<!-- unbind symbol is ~ -->
-
 <div class="wrapper">
 	<div class="centerize">
 		<div class="indent">
-			<header class="even" ai:class="{values#messages.length} % 2 ? 'even' : 'odd'">
+			<header ai:class="type-`{values#messages.length} % 2 ? 'even' : 'odd'` nextgen">
 				{{print "There is no any {lang#layout.title}" replace="name: {values#user}"}}
 			</header>
 			<section ai:click="{actions#click}">
@@ -16,8 +14,8 @@
 				{{else}}
 					<ul class="messages row">
 						{{#each "{values#messages} as idx, item"}}
-							<li ai:class="'size-' + {values#messages.length}">
-								<div ai:class="'type-' + {item.type}">
+							<li ai:class="size-{values#messages.length}">
+								<div ai:class="type-{item.type}">
 								</div>
 								<div class="text">
 									{{../lang#layout.title}} => {{idx}}: {{item.text}}

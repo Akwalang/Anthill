@@ -11,7 +11,7 @@
 (function (global, jQuery, _, undefined) {
 	"use strict";
 
-	var version = '0.1.4';
+	var version = '0.2.0';
 
 	var _slice = Array.prototype.slice,
 		_splice = Array.prototype.splice,
@@ -219,7 +219,8 @@
 		};
 
 		self.construct = function () {
-			this._attrs = {data: {}, indexes: {}};
+			this._indexes = {};
+			this._keys = {};
 		};
 
 		self.split = function (path) {
@@ -245,7 +246,7 @@
 		};
 
 		fn.getNames = function (path) {
-			return _keys(this.get(path));
+			return path ? _keys(this.get(path)) : this._keys.slice();
 		};
 
 		fn.check = function (path) {
@@ -268,7 +269,7 @@
 		};
 
 		fn.get = function (path, _noLast) {
-			var data = this._attrs.data;
+			var data = this;
 
 			if (!path || !path.length) {
 				return data;
@@ -543,11 +544,11 @@
 		// Indexer
 
 		fn._getIndexer = function (path) {
-			return this._attrs.indexes[path] || (this._attrs.indexes[path] = []);
+			return this._indexes[path] || (this._indexes[path] = []);
 		};
 
 		fn._removeIndexer = function (path, index) {
-			return delete this._attrs.indexes[path + '.' + '{' + index + '}'];
+			return delete this._indexes[path + '.' + '{' + index + '}'];
 		};
 
 		var helperStaticKey = function (path, index) {
@@ -1141,19 +1142,13 @@
 			};
 
 			var addMixins = function (Ant, mixins) {
-				if (!_isArray(mixins)) {
-					return;
-				}
-
-				var mixin;
-
-				for (var i = 0, len = mixins.length; i < len; i++) {
+				for (var mixin, i = 0, len = mixins.length; i < len; i++) {
 					mixin = Mixin(mixins[i]);
 
 					if (!mixin) {
 						throw 'Ai: Can\'t find mixin with name \'' + mixins[i] + '\'';
 					}
-					
+
 					mixin.extend(Ant);
 				}
 			};
@@ -1180,18 +1175,18 @@
 				Ant[FUNCTION_EXTEND] = function (ext) {
 					var _Ant = createConstructor();
 
-					var st = ext[PROPERTY_STATIC];
+					var _static = ext[PROPERTY_STATIC],
+						_mixins = ext[PROPERTY_MIXINS];
 
 					delete ext[PROPERTY_STATIC];
+					delete ext[PROPERTY_MIXINS];
 
 					Tools.inherit(_Ant, Ant, ext);
 
 					extend(_Ant, Ant);
 					
-					if (Tools.isPlainObject(st)) {
-						extend(_Ant, st);
-						addMixins(_Ant, st[PROPERTY_MIXINS]);
-					}
+					Tools.isPlainObject(_static) && extend(_Ant, _static);
+					_isArray(_mixins) && addMixins(_Ant, _mixins);
 
 					return _Ant;
 				};
@@ -1214,9 +1209,7 @@
 		})(Tools);
 
 		var Store = Queen.Extend({
-			statics: {
-				mixins: ['Attributes']
-			}
+			mixins: ['Attributes']
 		});
 
 		var Anthill = (function (Queen, Tools, global) {
@@ -1344,92 +1337,6 @@
 
 		return Application;
 	})(Anthill, Tools);
-
-	(function (Anthill) {
-/*
-		Anthill('path.AntName', {
-			extend: 'Queen',
-			require: ['Queen'],
-			mixins: ['Attributes', 'Observer'],
-			statics: {name: 'value'}
-		});
-*/
-		Anthill('GuidFactory', {
-			construct: function () {
-				var id = 0;
-
-				this.create = function () {
-					return id++;
-				};
-			}
-		});
-
-		Anthill('Model', {
-			statics: {
-				mixins: ['Attributes', 'Observer']
-			},
-
-			construct: function (data) {
-				this.merge('', this.defaults || {});
-				this.merge('', data);
-
-				_isFunction(this.initialize) && this.initialize();
-			}
-		});
-
-		Anthill('View', {
-			statics: {
-				mixins: ['Observer']
-			},
-
-			tpl: null,
-			liveDOM: null,
-
-			extData: null,
-
-			before: function (target) {
-				this.liveDOM.before(target);
-			},
-			after: function (target) {
-				this.liveDOM.after(target);
-			},
-			prependTo: function (target) {
-				this.liveDOM.prependTo(target);
-			},
-			appendTo: function (target) {
-				this.liveDOM.appendTo(target);
-			},
-
-			remove: function () {
-				this.liveDOM.hide();
-			},
-
-			render: function () {
-				var data = {model: this.model, view: this},
-					ext = _isFunction(this.dataMixin) ? this.dataMixin() : this.dataMixin;
-
-				Tools.extend(data, ext);
-
-				this.liveDOM = this.tpl(data);
-
-				this.trigger('render');
-
-				_isFunction(this.onRender) && this.onRender();
-			},
-
-			construct: function (data) {
-				this.options = data || {};
-
-				this.model = data.model;
-
-				_isFunction(this.initialize) && this.initialize();
-
-				this.render();
-			}
-		});
-
-	})(Anthill);
-
 
 	Anthill.version = version;
 
