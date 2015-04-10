@@ -3,11 +3,14 @@
 	<div class="centerize">
 		<div class="indent">
 			<header>
-				{{lang#layout.title}}<br />
-				{{lang.layout.title}}
+				{{lang#layout.title}}
 			</header>
 			<section>
-				{{faker.texts.description}}
+				<ul>
+					{{#each "{values#hash} as idx, value"}}
+						<li>{{idx}}: {{value}}</li>
+					{{/each}}
+				</ul>
 			</section>
 		</div>
 	</div>

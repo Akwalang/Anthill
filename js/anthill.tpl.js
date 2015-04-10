@@ -1,3 +1,11 @@
+/*
+
+TODO:
+1. values.list.[0].name -> Error
+2. values#model#name -> Error
+3. nested each -> Error 
+
+*/
 
 (function (global, doc, jQuery, _, Ai, undefined) {
 	'use strict';
@@ -50,6 +58,7 @@
 		tpl_lastName,
 		tpl_createPlaceholder,
 		tpl_strRepeat,
+		tpl_strEntry,
 		tpl_replaceNode;
 
 	(function () {
@@ -153,6 +162,17 @@
 
 		tpl_strRepeat = function (str, count) {
 			return (new Array((count || 0) + 1)).join(str);
+		};
+
+		tpl_strEntry = function (string, subString) {
+			var index = 0, count = 0;
+
+			while ((index = string.indexOf(subString, index)) >= 0) {
+				count++;
+				index += subString.length;
+			}
+
+			return count;
 		};
 
 		tpl_replaceNode = function (placeholder, element) {
@@ -1183,7 +1203,7 @@
 			rule = rule.replace(self.regexp, function (m, $1) {
 				var collected = self.collect($1, modifier);
 
-				var compiled = self.compilers[collected.compiler][collected.method](collected.rule, collected.offset, connector);
+				var compiled = self.compilers[collected.compiler](collected.rule, collected.offset, connector);
 
 				compiled.listener && listeners.push(compiled.listener);
 
@@ -1213,7 +1233,7 @@
 		self.GO_UP_PATH = self.GO_UP_CODE + '/';
 		self.GO_UP_EVAL = '[\'' + self.GO_UP_CODE + '\']';
 
-		var ARG_PARAMS = 'params';
+		var ARG_PARAMS = '__tpl__params__';
 
 		self.keyInjectScript = function (path, offset, params) {
 			var i1, i2;
@@ -1230,7 +1250,8 @@
 			return path;
 		};
 
-		self.keyInjectString = function (path, offset) {
+		// TODO: Refactor self.keyInjectStringAttribute and self.keyInjectStringPath
+		self.keyInjectStringAttribute = function (path, offset) {
 			var i1, i2, params = ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, offset);
 
 			while ((i1 = path.lastIndexOf('<%')) !== -1 && (i2 = path.lastIndexOf('%>')) !== -1) {
@@ -1241,13 +1262,15 @@
 			return path;
 		};
 
+		self.keyInjectStringPath = function (path, offset) {
+			var i1, i2, params = ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, offset);
 
-		self.hasUnbind = function (rule) {
-			return false;
-		};
+			while ((i1 = path.lastIndexOf('<%')) !== -1 && (i2 = path.lastIndexOf('%>')) !== -1) {
+				path = path.slice(0, i1 - 1) + '[' + params + '[\'' + path.slice(i1 + 2, i2) + '\']]' + path.slice(i2 + 2);
+				params += self.GO_UP_EVAL;
+			}
 
-		self.removeUnbind = function (rule) {
-			return rule;
+			return path;
 		};
 
 		self.unWrapp = function (rule) {
@@ -1258,25 +1281,24 @@
 			return rule;
 		};
 
+		// TODO: Extandeble compiler define
 		self.collect = function (rule, modifier) {
 			var result = {};
 
-			var isUnbinded = self.hasUnbind(rule);
-
-			if (isUnbinded) {
-				rule = self.removeUnbind(rule);
-			}
-
 			var bubble = bubbling(rule, modifier);
 
-			result.rule = modifyHelper(bubble.rule, bubble.modifier);
-			result.method = !result.rule || isUnbinded ? 'static' : 'dynamic';
+			result.rule = {
+				main: modifyHelper(bubble.rule, bubble.modifier)
+			};
 			result.offset = bubble.offset;
 
-			if (!result.rule) {
+			if (!result.rule.main) {
 				result.compiler = 'undefined';
 			}
 			else if (bubble.modifier && bubble.rule === bubble.modifier['@name']) {
+				result.rule.minor = ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, bubble.offset) + '[\'' + bubble.rule + '\']';
+				result.rule.regular = bubble.modifier['@regular'];
+				result.rule.name = bubble.rule;
 				result.compiler = 'index';
 			}
 			else {
@@ -1310,13 +1332,13 @@
 			}
 
 			if (path === modifier['@name']) {
-				return modifyHelper(modifier['@path'], modifier[self.GO_UP_CODE]);
+				return modifyHelper(modifier['@source'], modifier[self.GO_UP_CODE]);
 			}
 
 			var start = tpl_firstName(path);
 
 			if (start === modifier['@value']) {
-				path = modifier['@path'] + path.slice(start.length);
+				path = modifier['@regular'] + path.slice(start.length);
 			}
 
 			// TODO: Пренудительное указание подъёма вверх
@@ -1347,17 +1369,18 @@
 			custom: {}
 		};
 
-		compilers.path.dynamic = function (path, offset, connector) {
-			var source = tpl_parsePath(path),
+		compilers.path = function (rule, offset, connector) {
+			var source = tpl_parsePath(rule.main),
 				pattern = 'this.%s';
 
 			source.attr && (pattern += '.get(\'%s\')');
 
-			var attr = self.keyInjectString(source.attr, offset);
+			var path = self.keyInjectStringPath(source.path, offset + (source.attr.match(/<%\w+%>/g) || []).length);
+			var attr = self.keyInjectStringAttribute(source.attr, offset);
 
 			var result = {};
 
-			result.snippet = t_replace(pattern, source.path, attr);
+			result.snippet = t_replace(pattern, path, attr);
 
 			if (source.attr && connector) {
 				source.connector = connector;
@@ -1368,46 +1391,43 @@
 			return result;
 		};
 
-		compilers.path.static = function (path, offset) {
-			return self.compilers.path.dynamic(path, offset);
-		};
-
 		var indexConnector = {displace: 'change'};
 
-		compilers.index.dynamic = function (path, offset) {
-			var source = tpl_parsePath(path),
-				pattern = 'this.%s._indexes[\'%s\'][%s]';
-
-			var index = source.attr.lastIndexOf('.');
-
-			path = source.attr.slice(0, index);
-			index = source.attr.slice(index + 3, -2);
-
-			index = index.slice('listen_'.length);
-
-			var indexerPath = ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, offset) + '[\'' + index + '\']';
-
+		// TODO: Put out into each helper
+		compilers.index = function (rule, offset) {
 			var result = {};
 
-			result.snippet = t_replace(pattern, source.path, path, indexerPath);
-			result.snippet = self.keyInjectString(result.snippet, offset + 1);
-			result.snippet = ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, offset) + '.isArray ? ' +
-							 result.snippet + ' : ' +
-							 ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, offset) + '[\'' + index + '\']';
+			if (rule.main.indexOf('#') === -1) {
+				result.snippet = rule.minor;
+				return result;
+			}
+
+			var pattern = '%s ? %s : %s';
+
+			var isArray = ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, offset) + '.isArray';
+
+			var forArray, forHash, source = tpl_parsePath(rule.main);
+
+			var index = ARG_PARAMS + tpl_strRepeat(self.GO_UP_EVAL, offset) + '[\'' + rule.name + '\']';
+
+			forArray = 'this.%s._indexes[\'%s\'][%s]';
+
+			var path = self.keyInjectStringPath(source.path, offset + (source.attr.match(/<%\w+%>/g) || []).length);
+			var attr = self.keyInjectStringAttribute(source.attr, offset + 1);
+
+			forArray = t_replace(forArray, path, attr, index);
+
+			forHash = rule.minor;
+
+			result.snippet = t_replace(pattern, isArray, forArray, forHash);
 
 			source.connector = indexConnector;
 			source.offset = offset;
+			source.attr += '.<%regular_' + rule.name + '%>';
+
 			result.listener = source;
 
 			return result;
-		};
-
-		compilers.index.static = function (path, offest) {
-			var data = compilers.index.dynamic(path, offest);
-
-			delete data.listener;
-
-			return data;
 		};
 
 		return self;
@@ -1625,7 +1645,7 @@
 		blocks.register('print', worker);
 	})(Helpers.blocks);
 
-	(function (blocks, SubDOM, Statement) {
+	(function (blocks) {
 		var worker = {};
 
 		var connector = {change: 'change'};
@@ -1695,7 +1715,7 @@
 		};
 
 		blocks.register('if', worker);
-	})(Helpers.blocks, SubDOM, Statement);
+	})(Helpers.blocks);
 
 	(function (blocks) {
 		var worker = {};
@@ -1704,6 +1724,7 @@
 
 		var reg = /(\{[\w\.\-#]+\}) as (?:([\w\-]+),\s?)?([\w\-]+)/;
 
+		// TODO: Add property to hash
 		var listenerChange = function (davent) {
 			if (davent.eventPath !== davent.path) {
 				return;
@@ -1741,7 +1762,7 @@
 				params['..'] = this.params;
 				params.isArray = true;
 				params[modifier['@name']] = path_name;
-				params['listen_' + modifier['@name']] = '{' + path_name + '}';
+				params['regular_' + modifier['@name']] = '{' + path_name + '}';
 
 				this.list.insert(name, this.list.create(params));
 			}
@@ -1770,12 +1791,11 @@
 			var source = match[1];
 
 			source = Compile.unWrapp(source);
-			source = Compile.removeUnbind(source);
 
-			modifier['@name'] = match[2] || 'index';
+			modifier['@name'] = match[2] || '__index__';
 			modifier['@value'] = match[3];
 			modifier['@source'] = source;
-			modifier['@path'] = source + a_delimeter + '<%' + 'listen_' + modifier['@name'] + '%>';
+			modifier['@regular'] = source + a_delimeter + '<%regular_' + modifier['@name'] + '%>';
 			
 			fragment.modifier = modifier;
 		};
@@ -1812,7 +1832,7 @@
 
 			for (name in list) {
 				if (_hasOwnProperty.call(list, name) || list instanceof global.File && fileProperties.indexOf(name) !== -1) {
-					if (isArray) {
+					if (isArray && source.attr) {
 						path_name = this.data[source.path]._getStaticKey(source.attr, name);
 						insert = '{' + path_name + '}';
 					}
@@ -1825,7 +1845,7 @@
 					params['..'] = this.params;
 					params.isArray = isArray;
 					params[modifier['@name']] = path_name;
-					params['listen_' + modifier['@name']] = insert;
+					params['regular_' + modifier['@name']] = insert;
 
 					this.list.push(params);
 				}
@@ -1931,7 +1951,7 @@
 	})(Helpers.attributes);
 
 	(function (attributes) {
-		var CROSS_PREFIX = 'pointer';
+		var CROSS_PREFIX = 'cpp';
 
 		var CROSS_EVENTS = {};
 
