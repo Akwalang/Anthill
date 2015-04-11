@@ -971,6 +971,10 @@
 				_cur = self._wrap(cur, _subname);
 				_old = self._wrap(old, _subname);
 
+				if (_isEqual(_cur, _old)) {
+					continue;
+				}
+
 				events.push({
 					old: _old,
 					cur: _cur,
