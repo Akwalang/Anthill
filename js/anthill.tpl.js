@@ -1724,12 +1724,45 @@ TODO:
 
 		var reg = /(\{[\w\.\-#]+\}) as (?:([\w\-]+),\s?)?([\w\-]+)/;
 
-		// TODO: Add property to hash
 		var listenerChange = function (davent) {
-			if (davent.eventPath !== davent.path) {
+			var path = davent.eventPath.slice(davent.path.length + 1); // +1 for delimeter
+
+			if (path.indexOf(a_delimeter) !== -1) {
 				return;
 			}
 
+			if (path) {
+				helperPropertyChange.call(this, davent, path);
+				return;
+			}
+
+			helperSourceChange.call(this, davent);
+		};
+
+		var helperPropertyChange = function (davent, path) {
+			var path_name, insert, params,
+				modifier = this.fragment.modifier,
+				source = Compile.getSource(modifier, this.params);
+
+			if (this.isArray && source.attr) {
+				path_name = this.data[source.path]._getStaticKey(source.attr, path);
+				insert = '{' + path_name + '}';
+			}
+			else {
+				path_name = insert = path;
+			}
+
+			params = {};
+
+			params['..'] = this.params;
+			params.isArray = this.isArray;
+			params[modifier['@name']] = path_name;
+			params['regular_' + modifier['@name']] = insert;
+
+			this.list.push(params);
+		};
+
+		var helperSourceChange = function (davent) {
 			this.list.clean();
 			this.process();
 		};
@@ -1824,7 +1857,7 @@ TODO:
 			var name, params, path_name, insert,
 				list = this.useRule(this.findRule('main'));
 
-			var isArray = _isArray(list);
+			this.isArray = _isArray(list);
 
 			var modifier = this.fragment.modifier;
 
@@ -1832,7 +1865,7 @@ TODO:
 
 			for (name in list) {
 				if (_hasOwnProperty.call(list, name) || list instanceof global.File && fileProperties.indexOf(name) !== -1) {
-					if (isArray && source.attr) {
+					if (this.isArray && source.attr) {
 						path_name = this.data[source.path]._getStaticKey(source.attr, name);
 						insert = '{' + path_name + '}';
 					}
@@ -1843,7 +1876,7 @@ TODO:
 					params = {};
 
 					params['..'] = this.params;
-					params.isArray = isArray;
+					params.isArray = this.isArray;
 					params[modifier['@name']] = path_name;
 					params['regular_' + modifier['@name']] = insert;
 
