@@ -1760,8 +1760,8 @@ TODO:
 				source = Compile.getSource(modifier, this.params);
 
 			if (this.isArray && source.attr) {
-				path_name = this.data[source.path]._getStaticKey(source.attr, path);
-				regular = '{' + path_name + '}';
+				path_name = +path.slice(1, -1);
+				regular = path;
 			}
 			else {
 				path_name = regular = path;
