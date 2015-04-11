@@ -928,6 +928,16 @@ TODO:
 			return new SubDOM(this.fragment, this.data, params);
 		};
 
+		LiveList.fn.findWhere = function (param, value) {
+			for (var i = 0, len = this.subDoms.length; i < len; i++) {
+				if (this.subDoms[i].getParam(param) === value) {
+					return this.subDoms[i];
+				}
+			}
+
+			return null;
+		};
+
 		LiveList.fn.splice = function (/*index, remove, subDOMs...*/) {
 			var args = _slice.call(arguments);
 
@@ -1082,18 +1092,23 @@ TODO:
 			}
 		};
 
-		SubDOM.fn.getModifiersStack = function () {
-			var fragment = this.fragment, result = [];
+		// TODO: remove
+		// SubDOM.fn.getModifiersStack = function () {
+		// 	var fragment = this.fragment, result = [];
 
-			while (fragment.parent) {
-				if (fragment.modifier) {
-					result.push(fragment.modifier);
-				}
+		// 	while (fragment.parent) {
+		// 		if (fragment.modifier) {
+		// 			result.push(fragment.modifier);
+		// 		}
 
-				fragment = fragment.parent;
-			}
+		// 		fragment = fragment.parent;
+		// 	}
 
-			return result;
+		// 	return result;
+		// };
+
+		SubDOM.fn.getParam = function (name) {
+			return this.params[name];
 		};
 
 		SubDOM.fn.toggleFreeze = function (state) {
@@ -1740,16 +1755,20 @@ TODO:
 		};
 
 		var helperPropertyChange = function (davent, path) {
-			var path_name, insert, params,
+			var path_name, regular, params,
 				modifier = this.fragment.modifier,
 				source = Compile.getSource(modifier, this.params);
 
 			if (this.isArray && source.attr) {
 				path_name = this.data[source.path]._getStaticKey(source.attr, path);
-				insert = '{' + path_name + '}';
+				regular = '{' + path_name + '}';
 			}
 			else {
-				path_name = insert = path;
+				path_name = regular = path;
+			}
+
+			if (this.list.findWhere('regular_' + modifier['@name'], regular)) {
+				return;
 			}
 
 			params = {};
@@ -1757,7 +1776,7 @@ TODO:
 			params['..'] = this.params;
 			params.isArray = this.isArray;
 			params[modifier['@name']] = path_name;
-			params['regular_' + modifier['@name']] = insert;
+			params['regular_' + modifier['@name']] = regular;
 
 			this.list.push(params);
 		};
@@ -1854,7 +1873,7 @@ TODO:
 		var fileProperties = 'name lastModified lastModifiedDate size type'; // hack for ie and ff
 
 		worker.fn.process = function () {
-			var name, params, path_name, insert,
+			var name, params, path_name, regular,
 				list = this.useRule(this.findRule('main'));
 
 			this.isArray = _isArray(list);
@@ -1867,10 +1886,10 @@ TODO:
 				if (_hasOwnProperty.call(list, name) || list instanceof global.File && fileProperties.indexOf(name) !== -1) {
 					if (this.isArray && source.attr) {
 						path_name = this.data[source.path]._getStaticKey(source.attr, name);
-						insert = '{' + path_name + '}';
+						regular = '{' + path_name + '}';
 					}
 					else {
-						path_name = insert = name;
+						path_name = regular = name;
 					}
 
 					params = {};
@@ -1878,7 +1897,7 @@ TODO:
 					params['..'] = this.params;
 					params.isArray = this.isArray;
 					params[modifier['@name']] = path_name;
-					params['regular_' + modifier['@name']] = insert;
+					params['regular_' + modifier['@name']] = regular;
 
 					this.list.push(params);
 				}
