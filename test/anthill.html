@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>UTest - Anthill</title>
+
+	<link href="./q-unit/qunit-1.14.0.css" type="text/css" rel="stylesheet" />
+	<script src="./q-unit/qunit-1.14.0.js" type="text/javascript"></script>
+
+	<script src="../js/jquery-1.9.0.js"></script>
+	<script src="../js/lodash.compat.js"></script>
+	<script src="../js/anthill.js"></script>
+
+	<script type="text/javascript">
+
+		(function (Ai) {
+
+			var Attributes = Ai({mixins: ['Attributes']});
+
+			QUnit.module('Attributes');
+
+			test('.set(path, value)', function () {
+				var old_1, old_2, space = new Attributes();
+
+				/* Simple */
+				old_1 = space.set('test_1', 'Test string 1');
+
+				ok(space.test_1 === 'Test string 1', 'New value 1');
+				ok(old_1 === undefined, 'Old value 1');
+
+				old_2 = space.set('test_1', 'Test string 2');
+
+				ok(space.test_1 === 'Test string 2', 'New value 2');
+				ok(old_2 === 'Test string 1', 'Old value 2');
+
+				/* Nested */
+				old_1 = space.set('test_2.value', 'Test string 1');
+
+				ok(space.test_2.value === 'Test string 1', 'New value 3');
+				ok(old_1 === undefined, 'Old value 3');
+
+				old_2 = space.set('test_2.value', 'Test string 2');
+
+				ok(space.test_2.value === 'Test string 2', 'New value 4');
+				ok(old_2 === 'Test string 1', 'Old value 4');
+
+				/* Arrays */
+				/* Multiple */
+			});
+
+			test('.get(path)', function () {
+				var space = new Attributes();
+
+				/* Simple */
+				space.set('test_1', 'Test string 1');
+				ok(space.get('test_1') === 'Test string 1', 'Get current value 1');
+				
+				/* Nested */
+				space.set('test_2.value', 'Test string 1');
+				ok(space.get('test_2.value') === 'Test string 1', 'Get current value 2');
+
+				/* Arrays */
+			});
+
+			test('.unset(path)', function () {
+				var space = new Attributes();
+
+				/* Simple */
+				space.set('test_1', 'Test string 1');
+				space.unset('test_1');
+				ok(space.get('test_1') === undefined, 'Unset 1');
+
+				/* Nested */
+				space.set('test_2.value', 'Test string 1');
+				space.unset('test_2.value');
+				ok(space.get('test_2.value') === undefined, 'Unset 2');
+
+				/* Arrays */
+				/* Multiple */
+				space.set('test_1', 'Test string 1');
+				space.set('test_2.value', 'Test string 1');
+
+				space.unset('test_1', 'test_2.value');
+
+				ok(space.get('test_1') === undefined && space.get('test_2.value') === undefined, 'Double unset');
+			});
+
+			test('.check(path)', function () {
+				var space = new Attributes();
+
+				/* Simple */
+				space.set('test_1', 'Test string 1');
+				ok(space.check('test_1') === true, 'Check 1');
+
+				/* Nested */
+				space.set('test_2.value', 'Test string 1');
+				ok(space.check('test_2.value') === true, 'Check 2');
+
+				ok(space.check('unsetted') === false, 'Check 3');
+				ok(space.check('unsetted.value') === false, 'Check 4');
+				ok(space.check('unsetted') === false, 'Check 5');
+			});
+
+		})(Anthill);
+	</script>
+
+</head>
+
+<body>
+	<h1 id="qunit-header">Test Anthill.js</h1>
+
+	<h2 id="qunit-banner"></h2>
+
+	<h2 id="qunit-userAgent"></h2>
+	
+	<ol id="qunit-tests">
+	</ol>
+</body>
+
+</html>

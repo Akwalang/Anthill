@@ -253,8 +253,7 @@
 			path = this._getDynamicPath(path);
 			path = self.unwrapIndexes(path);
 
-			var name, names = self.split(path),
-				data = this.get();
+			var name, names = self.split(path), data = this;
 
 			while ((name = names.shift()) && names.length) {
 				try {
@@ -265,7 +264,7 @@
 				}
 			}
 
-			return name in data;
+			return !!data && name in data;
 		};
 
 		fn.get = function (path, _noLast) {
@@ -1252,6 +1251,11 @@
 			};
 
 			var Anthill = function Anthill (path, data) {
+				if (Tools.isPlainObject(path)) {
+					data = path;
+					path = undefined;
+				}
+
 				var Parent, ext, st;
 				var Factory = path ? get(path) : Queen;
 
@@ -1280,7 +1284,7 @@
 					Factory = Parent[FUNCTION_EXTEND](ext);
 				}
 
-				set(path, Factory);
+				path && set(path, Factory);
 
 				return Factory;
 			};
