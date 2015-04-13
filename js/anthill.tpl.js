@@ -1759,6 +1759,10 @@ TODO:
 				modifier = this.fragment.modifier,
 				source = Compile.getSource(modifier, this.params);
 
+			if (this.isArray && path === 'length') {
+				return;
+			}
+
 			if (this.isArray && source.attr) {
 				path_name = +path.slice(1, -1);
 				regular = path;
