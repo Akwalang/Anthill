@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>UTest - Anthill</title>
+
+	<link href="./q-unit/qunit-theme-ninja.css" type="text/css" rel="stylesheet" />
+	<script src="./q-unit/qunit-1.14.0.js" type="text/javascript"></script>
+
+	<script src="../js/jquery-1.9.0.js"></script>
+	<script src="../js/lodash.compat.js"></script>
+	<script src="../js/anthill.js"></script>
+	<script src="../js/anthill.modules.js" type="text/javascript"></script>
+	<script src="../js/anthill.tpl.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+		(function ($) {
+			var files = {
+				'attrs': './modules/anthill.attributes.js'
+			};
+
+			var params = (function () {
+				var search = window.location.search.slice(1);
+
+				var result = {},
+					pairs = search.split('&');
+
+				for (var i = 0, len = pairs.length; i < len; i++) {
+					pairs[i] = pairs[i].split('=');
+					result[pairs[i][0]] = decodeURIComponent(pairs[i][1]);
+				}
+
+				return result;
+			})();
+
+			var load = (function () {
+				var head = document.head || document.getElementsByTagName('head')[0];
+
+				var prev = null;
+
+				return function (file) {
+					var defer = $.Deferred();
+
+					var success = function () {
+						var script = document.createElement('script');
+
+						script.src = file;
+						script.type = 'text/javascript';
+
+						script.onreadystatechange = function () {     
+							if (this.readyState === 'complete' || this.readyState === 'loaded') {     
+								setTimeout(defer.resolve, 0)
+							}
+						};
+
+						script.onload = defer.resolve;
+						script.onerror = defer.reject;
+
+						head.appendChild(script);
+					};
+
+					var fail = function () {
+						console.warn('Can\'t start load file ' + file);
+					};
+
+					$.when(prev).then(success, fail);
+
+					prev = defer;
+				};
+			})();
+
+			var init = function () {
+				var modules = params.modules ? params.modules.split(',') : _.keys(files);
+
+				for (var i = 0, len = modules.length; i < len; i++) {
+					load(files[modules[i]]);
+				}
+			};
+
+			$(init);
+
+		})(jQuery);
+	</script>
+
+</head>
+
+<body>
+	<h1 id="qunit-header">Test Anthill.js</h1>
+
+	<h2 id="qunit-banner"></h2>
+
+	<h2 id="qunit-userAgent"></h2>
+	
+	<ol id="qunit-tests">
+	</ol>
+</body>
+
+</html>
