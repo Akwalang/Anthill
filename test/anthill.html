@@ -21,7 +21,7 @@
 			QUnit.module('Attributes');
 
 			test('.set(path, value)', function () {
-				var old_1, old_2, space = new Attributes();
+				var old_1, old_2, sk, space = new Attributes();
 
 				/* Simple */
 				old_1 = space.set('test_1', 'Test string 1');
@@ -46,7 +46,51 @@
 				ok(old_2 === 'Test string 1', 'Old value 4');
 
 				/* Arrays */
+				space.set('test_3', ['Test string 1', 'Test string 2', 'Test string 3']);
+
+				old_1 = space.set('test_3.[1]', 'New string 1');
+
+				ok(space.test_3[1] === 'New string 1', 'New value 5');
+				ok(old_1 === 'Test string 2', 'Old value 5');
+
+				sk = space._getStaticKey('test_3', 1);
+
+				old_2 = space.set('test_3.{' + sk + '}', 'New string 2');
+
+				ok(space.test_3[1] === 'New string 2', 'New value 6 [static path]');
+				ok(old_2 === 'New string 1', 'Old value 6 [static path]');
+
 				/* Multiple */
+				old_1 = space.set({
+					'test_4.item_1': 'Test 1',
+					'test_4.item_2': 'Test 2',
+					'test_4.item_3': 'Test 3',
+					'test_4.item_4': 'Test 4'
+				});
+
+				ok(space.test_4.item_1 === 'Test 1', 'New value 7');
+				ok(space.test_4.item_2 === 'Test 2', 'New value 7');
+				ok(space.test_4.item_3 === 'Test 3', 'New value 7');
+				ok(space.test_4.item_4 === 'Test 4', 'New value 7');
+
+				ok(old_1['test_4.item_1'] === undefined, 'Old value 7');
+				ok(old_1['test_4.item_2'] === undefined, 'Old value 7');
+				ok(old_1['test_4.item_3'] === undefined, 'Old value 7');
+				ok(old_1['test_4.item_4'] === undefined, 'Old value 7');
+
+				old_2 = space.set({
+					'test_4.item_2': 'New 2',
+					'test_4.item_4': 'New 4'
+				});
+
+				ok(space.test_4.item_1 === 'Test 1', 'New value 7');
+				ok(space.test_4.item_2 === 'New 2', 'New value 8');
+				ok(space.test_4.item_3 === 'Test 3', 'New value 7');
+				ok(space.test_4.item_4 === 'New 4', 'New value 8');
+
+				ok(old_2['test_4.item_2'] === 'Test 2', 'Old value 8');
+				ok(old_2['test_4.item_4'] === 'Test 4', 'Old value 8');
+
 			});
 
 			test('.get(path)', function () {
@@ -69,21 +113,31 @@
 				/* Simple */
 				space.set('test_1', 'Test string 1');
 				space.unset('test_1');
-				ok(space.get('test_1') === undefined, 'Unset 1');
+
+				ok(('test_1' in space) === false, 'Unset 1');
 
 				/* Nested */
 				space.set('test_2.value', 'Test string 1');
 				space.unset('test_2.value');
-				ok(space.get('test_2.value') === undefined, 'Unset 2');
+
+				ok(('value' in space.test_2) === false, 'Unset 2');
 
 				/* Arrays */
+				space.set('test_3', [1, 2, 3, 4, 5, 6, 7]);
+
+				space.unset('test_3.[0]');
+				space.unset('test_3.[4]');
+
+				ok((0 in space.test_3) === false, 'Unset 3');
+				ok((4 in space.test_3) === false, 'Unset 3');
+
 				/* Multiple */
-				space.set('test_1', 'Test string 1');
-				space.set('test_2.value', 'Test string 1');
+				space.set('test_4', 'Test string 1');
+				space.set('test_5.value', 'Test string 1');
 
-				space.unset('test_1', 'test_2.value');
+				space.unset('test_4', 'test_5.value');
 
-				ok(space.get('test_1') === undefined && space.get('test_2.value') === undefined, 'Double unset');
+				ok(('test_4' in space) === false && ('value' in space.test_5) === false, 'Double unset');
 			});
 
 			test('.check(path)', function () {
@@ -100,6 +154,13 @@
 				ok(space.check('unsetted') === false, 'Check 3');
 				ok(space.check('unsetted.value') === false, 'Check 4');
 				ok(space.check('unsetted') === false, 'Check 5');
+
+				/* Arrays */
+				space.set('test_3', [1]);
+
+				ok(space.check('test_3.[0]') === true, 'Check 6');
+				ok(space.check('test_3.[1]') === false, 'Check 6');
+				ok(space.check('test_3.length') === true, 'Check 6');
 			});
 
 		})(Anthill);
