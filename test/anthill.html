@@ -91,6 +91,14 @@
 				ok(old_2['test_4.item_2'] === 'Test 2', 'Old value 8');
 				ok(old_2['test_4.item_4'] === 'Test 4', 'Old value 8');
 
+				/* Error */
+				try {
+					space.set('', 'Test string 1');
+					ok(false, 'Exaption 1');
+				}
+				catch (e) {
+					ok(true, 'Exaption 1');
+				}
 			});
 
 			test('.get(path)', function () {
@@ -164,12 +172,95 @@
 			});
 
 			test('.merge(path, source)', function () {
-				var space = new Attributes();
+				var old, space = new Attributes();
 
-				debugger;
-				// space.set('', )
+				space.set('test_1', {
+					item_1: 1,
+					item_2: 'test',
+					item_3: [1, 2, 3, 4, 5],
+					item_4: {
+						sub_1: 2,
+						sub_2: 'test 2',
+						sub_3: ['q', 'w', 'e', 'r', 't', 'y']
+					}
+				});
 
-				ok(!0);
+				old = space.merge('test_1', {
+					item_1: 5,
+					item_2: 'test',
+					item_3: ['+', '-', '='],
+					item_4: {
+						sub_1: 6,
+						sub_2: 'test 3',
+						sub_3: {
+							3: '!',
+							5: '$',
+							6: '&'
+						}
+					}
+				});
+
+				ok(space.test_1.item_1 === 5, 'New value 1');
+				ok(space.test_1.item_2 === 'test', 'New value 2');
+				ok(_.isEqual(space.test_1.item_3, ['+', '-', '=']), 'New value 3');
+				ok(space.test_1.item_4.sub_1 === 6, 'New value 4');
+				ok(space.test_1.item_4.sub_2 === 'test 3', 'New value 5');
+				ok(_.isEqual(space.test_1.item_4.sub_3, ['q', 'w', 'e', '!', 't', '$', '&']), 'New value 6');
+				ok(space.test_1.item_4.sub_3.length === 7, 'New value 7');
+
+				ok(old.item_1 === 1, 'Old value 1');
+				ok(old.item_2 === 'test', 'Old value 2');
+				ok(_.isEqual(old.item_3, [1, 2, 3, 4, 5]), 'Old value 3');
+				ok(old.item_4.sub_1 === 2, 'Old value 4');
+				ok(old.item_4.sub_2 === 'test 2', 'Old value 5');
+				ok(old.item_4.sub_3[3] === 'r', 'Old value 6');
+				ok(old.item_4.sub_3[5] === 'y', 'Old value 7');
+				ok(old.item_4.sub_3[6] === undefined, 'Old value 8');
+				ok(old.item_4.sub_3.length === 6, 'Old value 9');
+
+				space.set('', {
+					item_1: 1,
+					item_2: 'test',
+					item_3: [1, 2, 3, 4, 5],
+					item_4: {
+						sub_1: 2,
+						sub_2: 'test 2',
+						sub_3: ['q', 'w', 'e', 'r', 't', 'y']
+					}
+				});
+
+				old = space.merge('', {
+					item_1: 5,
+					item_2: 'test',
+					item_3: ['+', '-', '='],
+					item_4: {
+						sub_1: 6,
+						sub_2: 'test 3',
+						sub_3: {
+							3: '!',
+							5: '$',
+							6: '&'
+						}
+					}
+				});
+
+				ok(space.item_1 === 5, 'New value 1');
+				ok(space.item_2 === 'test', 'New value 2');
+				ok(_.isEqual(space.item_3, ['+', '-', '=']), 'New value 3');
+				ok(space.item_4.sub_1 === 6, 'New value 4');
+				ok(space.item_4.sub_2 === 'test 3', 'New value 5');
+				ok(_.isEqual(space.item_4.sub_3, ['q', 'w', 'e', '!', 't', '$', '&']), 'New value 6');
+				ok(space.item_4.sub_3.length === 7, 'New value 7');
+
+				ok(old.item_1 === 1, 'Old value 1');
+				ok(old.item_2 === 'test', 'Old value 2');
+				ok(_.isEqual(old.item_3, [1, 2, 3, 4, 5]), 'Old value 3');
+				ok(old.item_4.sub_1 === 2, 'Old value 4');
+				ok(old.item_4.sub_2 === 'test 2', 'Old value 5');
+				ok(old.item_4.sub_3[3] === 'r', 'Old value 6');
+				ok(old.item_4.sub_3[5] === 'y', 'Old value 7');
+				ok(old.item_4.sub_3[6] === undefined, 'Old value 8');
+				ok(old.item_4.sub_3.length === 6, 'Old value 9');
 			});
 
 		})(Anthill);
