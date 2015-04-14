@@ -297,6 +297,14 @@
 		fn.set = function (path, value) {
 			var _path, result;
 
+			if (!path && !Tools.isPlainObject(value)) {
+				throw new Error('Ai: You can\'t set simple value to root path.');
+			}
+
+			if (!path && Tools.isPlainObject(value)) {
+				return this.set(value);
+			}
+
 			if (Tools.isPlainObject(path)) {
 				result = {};
 
