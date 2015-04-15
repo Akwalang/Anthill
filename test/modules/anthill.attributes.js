@@ -248,4 +248,81 @@
 		ok(old.item_4.sub_3.length === 6, 'Old value 9');
 	});
 
+	test('.splice(path, offset, remove, adds...)', function () {
+		var old, space = new Attributes();
+
+		space.set('test.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		old = space.splice('test.array', 2, 3, 'a', 's', 'd');
+
+		ok(_.isEqual(space.test.array, ['q', 'w', 'a', 's', 'd', 'y']));
+		ok(_.isEqual(old, {2: 'e', 3: 'r', 4: 't'}));
+	});
+
+	test('.remove(path, offset, remove)', function () {
+		var old, space = new Attributes();
+
+		space.set('test.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		old = space.splice('test.array', 1, 4);
+
+		ok(_.isEqual(space.test.array, ['q', 'y']));
+		ok(_.isEqual(old, {1: 'w', 2: 'e', 3: 'r', 4: 't'}));
+	});
+
+	test('.insert(path, offset, adds...)', function () {
+		var old, space = new Attributes();
+
+		space.set('test.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		old = space.insert('test.array', 4, 'a', 's', 'd');
+
+		ok(_.isEqual(space.test.array, ['q', 'w', 'e', 'r', 'a', 's', 'd', 't', 'y']));
+		ok(_.isEqual(old, {}));
+	});
+
+	test('.push(path, add)', function () {
+		var old, space = new Attributes();
+
+		space.set('test.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		old = space.push('test.array', 'a');
+
+		ok(_.isEqual(space.test.array, ['q', 'w', 'e', 'r', 't', 'y', 'a']));
+		ok(_.isEqual(old, {}));
+	});
+
+	test('.pop(path)', function () {
+		var value, space = new Attributes();
+
+		space.set('test.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		value = space.pop('test.array');
+
+		ok(_.isEqual(space.test.array, ['q', 'w', 'e', 'r', 't']));
+		ok(value === 'y');
+	});
+
+	test('.unshift(path, add)', function () {
+		var old, space = new Attributes();
+
+		space.set('test.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		old = space.unshift('test.array', 'a');
+
+		ok(_.isEqual(space.test.array, ['a', 'q', 'w', 'e', 'r', 't', 'y']));
+		ok(_.isEqual(old, {}));
+	});
+
+	test('.shift(path)', function () {
+		var value, space = new Attributes();
+
+		space.set('test.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		value = space.shift('test.array');
+
+		ok(_.isEqual(space.test.array, ['w', 'e', 'r', 't', 'y']));
+		ok(value === 'q');
+	});
+
 })(Anthill, _);
