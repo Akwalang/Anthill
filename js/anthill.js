@@ -1019,12 +1019,12 @@
 
 		fn.notify = function (events) {
 			for (var i = 0, len = events.length; i < len; i++) {
-				this.trigger(events[i].type, events[i].path, events[i]);
+				this.trigger(events[i].type, events[i].path, [events[i]]);
 			}
 		};
 
 		fn.on = function (type, name, callback) {
-			if (_isString(name)) {
+			if (_isString(name) && this.hasMixin('Attributes')) {
 				name = this._getStaticPath(name);
 			}
 
@@ -1048,7 +1048,7 @@
 
 		// TODO: Remove events when it's flushed and empty
 		fn.off = function (type, name, callback) {
-			if (_isString(name)) {
+			if (_isString(name) && this.hasMixin('Attributes')) {
 				name = this._getStaticPath(name);
 			}
 
@@ -1094,15 +1094,18 @@
 		};
 
 		// TODO: missing name argument
-		fn.trigger = function (type, name, davent) {
-			if (_isString(name)) {
+		fn.trigger = function (type, name, params) {
+			if (_isString(name) && this.hasMixin('Attributes')) {
 				name = this._getStaticPath(name);
 			}
 
-			if (name === undefined || Tools.isPlainObject(name)) {
-				davent = name;
+			if (_isArray(name)) {
+				params = name;
 				name = noName;
 			}
+
+			name === undefined && (name = noName);
+			params === undefined && (params = []);
 
 			var _name, listener = this._events[type];
 
@@ -1110,11 +1113,9 @@
 				return;
 			}
 
-			var args = _slice.call(arguments, 2);
-
 			for (_name in listener[name]) {
 				if (_hasOwnProperty.call(listener[name], _name) && _isFunction(listener[name][_name])) {
-					listener[name][_name].apply(this, args);
+					listener[name][_name].apply(this, params);
 				}
 			}
 		};
@@ -1213,7 +1214,7 @@
 			Queen.fn.constructor = Queen;
 
 			Queen.fn.hasMixin = function (name) {
-				return _indexOf(this[PROPERTY_MIXINS], name) !== -1;
+				return _indexOf(this.constructor[PROPERTY_MIXINS], name) !== -1;
 			};
 
 			return Queen;
