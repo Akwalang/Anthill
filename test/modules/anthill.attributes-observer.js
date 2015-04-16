@@ -13,14 +13,14 @@
 		callbacks = [];
 
 		callbacks[0] = function (davent) {
-			results[0] = davent.eventPath = 'test_1' &&
+			results[0] = davent.eventPath === 'test_1' &&
 						 davent.path === 'test_1' &&
 						 davent.old === undefined &&
 						 davent.cur === 'New value 1';
 		};
 
 		callbacks[1] = function (davent) {
-			results[1] = davent.eventPath = 'test_1' &&
+			results[1] = davent.eventPath === 'test_1' &&
 						 davent.path === 'test_1' &&
 						 davent.old === 'New value 1' &&
 						 davent.cur === 'New value 2';
@@ -43,21 +43,21 @@
 		callbacks = [];
 
 		callbacks[0] = function (davent) {
-			results[0] = davent.eventPath = 'test_2' &&
+			results[0] = davent.eventPath === 'test_2' &&
 						 davent.path === 'test_2.nested' &&
 						 davent.old === 'Test value' &&
 						 davent.cur === 'New value 1';
 		};
 
 		callbacks[1] = function (davent) {
-			results[1] = davent.eventPath = 'test_2' &&
+			results[1] = davent.eventPath === 'test_2' &&
 						 davent.path === 'test_2.nested' &&
 						 davent.old === 'New value 1' &&
 						 davent.cur === 'New value 2';
 		};
 
 		callbacks[2] = function (davent) {
-			results[2] = davent.eventPath = 'test_2' &&
+			results[2] = davent.eventPath === 'test_2' &&
 						 davent.path === 'test_2.nested' &&
 						 davent.old === 'New value 2' &&
 						 davent.cur === undefined;
@@ -87,21 +87,21 @@
 		callbacks = [];
 
 		callbacks[0] = function (davent) {
-			results[0] = davent.eventPath = 'test_3.nested' &&
+			results[0] = davent.eventPath === 'test_3.nested' &&
 						 davent.path === 'test_3' &&
 						 _.isEqual(davent.old, {nested: 'Test value'}) &&
 						 _.isEqual(davent.cur, {nested: 'New value 1'});
 		};
 
 		callbacks[1] = function (davent) {
-			results[1] = davent.eventPath = 'test_3.nested' &&
+			results[1] = davent.eventPath === 'test_3' &&
 						 davent.path === 'test_3' &&
 						 _.isEqual(davent.old, {nested: 'New value 1'}) &&
 						 _.isEqual(davent.cur, {nested: 'New value 2'});
 		};
 
 		callbacks[2] = function (davent) {
-			results[2] = davent.eventPath = 'test_3.nested' &&
+			results[2] = davent.eventPath === 'test_3.nested' &&
 						 davent.path === 'test_3' &&
 						 _.isEqual(davent.old, {nested: 'New value 2'}) &&
 						 _.isEqual(davent.cur, {nested: undefined});
@@ -131,24 +131,32 @@
 		callbacks = [];
 
 		callbacks[0] = function (davent) {
-			results[0] = davent.eventPath = 'test_4.array.{0}' &&
+			results[0] = davent.eventPath === 'test_4.array.{0}' &&
 						 davent.path === 'test_4.array.{0}' &&
 						 davent.old === 't' &&
 						 davent.cur === 's';
 		};
 
 		callbacks[1] = function (davent) {
-			results[1] = davent.eventPath = 'test_4.array.{0}' &&
+			results[1] = davent.eventPath === 'test_4.array' &&
 						 davent.path === 'test_4.array.{0}' &&
 						 davent.old === 's' &&
 						 davent.cur === 6;
 		};
 
 		callbacks[2] = function (davent) {
-			results[2] = davent.eventPath = 'test_4.array.length' &&
+			console.log(davent);
+			results[2] = davent.eventPath === 'test_4.array' &&
 						 davent.path === 'test_4.array.length' &&
 						 davent.old === 6 &&
 						 davent.cur === 5;
+		};
+
+		callbacks[3] = function (davent) {
+			results[3] = davent.eventPath === 'test_4.array.{1}' &&
+						 davent.path === 'test_4.array.length' &&
+						 davent.old instanceof Ai.Unknow &&
+						 davent.cur === 151;
 		};
 
 		rabbit.set('test_4.array', ['q', 'w', 'e', 'r', 't', 'y']);
@@ -170,6 +178,12 @@
 		results[2] = false;
 		rabbit.splice('test_4.array', 1, 2, 'test');
 		rabbit.off('change', 'test_4.array.length', callbacks[2]);
+
+		rabbit.set('test_4.array', ['q', 'w', 'e', 'r', 't', 'y']);
+		rabbit.on('change', 'test_4.array.length', callbacks[3]);
+		results[3] = false;
+		rabbit.set('test_4.array.[150]', 'test');
+		rabbit.off('change', 'test_4.array.length', callbacks[3]);
 
 		ok(_.every(results), '[' + results.join(', ') + ']');
 
