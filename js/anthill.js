@@ -883,7 +883,7 @@
 			this.notify(events);
 
 			if (cur_length !== old_length) {
-				events = this._match('change', path + '.length', cur_length, old_length);
+				events = this._match('change', path, {length: cur_length}, {length: old_length});
 				this.notify(events);
 			}
 
