@@ -41,6 +41,8 @@
 		_isEqual = _.isEqual,
 		_cloneDeep = _.cloneDeep;
 
+	var Unknow = function Unknow () {};
+
 	var Tools = (function () {
 		var self = {};
 
@@ -235,10 +237,10 @@
 			return path.replace(/\[|\]/g, '');
 		};
 
-		self.getLastName = function (path) {
+		self.getLastName = function (path, unwrap) {
 			var name = self.split(path).pop();
 
-			return self.unwrapIndexes(name);
+			return unwrap ? self.unwrapIndexes(name) : name;
 		};
 
 		self.getDelimiter = function () {
@@ -320,7 +322,7 @@
 			path = this._getDynamicPath(path);
 
 			var space = this.get(path, true),
-				key = self.getLastName(path);
+				key = self.getLastName(path, true);
 
 			var old = space[key];
 
@@ -344,7 +346,7 @@
 			}
 
 			var space = this.get(path, true),
-				name = self.getLastName(path);
+				name = self.getLastName(path, true);
 
 			var old = space[name];
 
@@ -549,6 +551,17 @@
 		};
 
 		// Indexer
+
+		var isDynamicIndex = /^\[\d+\]$/;
+		var isStaticIndex = /^\{\d+\}$/;
+
+		self.isDynamicIndex = function (name) {
+			return isDynamicIndex.test(name);
+		};
+
+		self.isStaticIndex = function (name) {
+			return isStaticIndex.test(name);
+		};
 
 		fn._getIndexer = function (path) {
 			return this._indexes[path] || (this._indexes[path] = []);
@@ -921,7 +934,6 @@
 			this.notify(events);
 		};
 
-		// TODO: match array length
 		self._capture = function (type, path, cur, old) {
 			var path_1, path_2, _subname, _cur, _old,
 				d_path_1, d_path_2,
@@ -959,8 +971,44 @@
 			return events;
 		};
 
+		// for array length
+		self._sibling = function (type, path, cur, old) {
+			var last, index, length, _path,
+				events = [], list = this._events.change,
+				names = Attributes.split(path);
+
+			last = names.pop();
+
+			if (!Attributes.isStaticIndex(last)) {
+				return events;
+			}
+
+			_path = Attributes.join(names.concat('length'));
+
+			if (list[_path] === undefined) {
+				return events;
+			}
+
+			index = this._getDynamicKey(Attributes.join(names), last.slice(1, -1));
+			length = this.get(_path);
+
+			if (index + 1 !== length) {
+				return events;
+			}
+
+			events.push({
+				old: new Unknow(),
+				cur: length,
+				path: _path,
+				eventPath: path,
+				type: 'change'
+			});
+
+			return events;
+		};
+
 		self._propagation = function (type, path, cur, old) {
-			var _path, _cur, _old, _subname,
+			var _path, _cur, _old, _subname, 
 				d_path_1, d_path_2,
 				events = [], list = this._events[type];
 
@@ -998,9 +1046,10 @@
 			path = this._getStaticPath(path);
 
 			var capture = self._capture.call(this, type, path, cur, old),
+				sibling = self._sibling.call(this, type, path, cur, old),
 				propagation = self._propagation.call(this, type, path, cur, old);
 
-			var i, len, name, events = [].concat(capture, propagation);
+			var i, len, name, events = [].concat(capture, sibling, propagation);
 
 			if (Tools.isPlainObject(customData)) {
 				for (i = 0, len = events.length; i < len; i++) {
@@ -1357,6 +1406,7 @@
 
 	Anthill.version = version;
 
+	Anthill.Unknow = Unknow;
 	Anthill.Tools = Tools;
 	Anthill.Mixin = Mixin;
 	Anthill.Application = Anthill.App = Application;
