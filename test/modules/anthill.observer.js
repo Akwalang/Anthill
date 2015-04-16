@@ -11,11 +11,11 @@
 			rabbit = new Observer();
 
 		var callback_1 = function () {
-			result_1 = true;
+			result_1 = !result_1;
 		};
 
 		var callback_2 = function () {
-			result_2 = true;
+			result_2 = !result_2;
 		};
 
 		rabbit.on('run', callback_1);
@@ -36,19 +36,19 @@
 			rabbit = new Observer();
 
 		var callback_1 = function () {
-			result_1 = false;
+			result_1 = !result_1;
 		};
 
 		var callback_2 = function () {
-			result_2 = false;
+			result_2 = !result_2;
 		};
 
 		var callback_3 = function () {
-			result_3 = false;
+			result_3 = !result_3;
 		};
 
 		var callback_4 = function () {
-			result_4 = false;
+			result_4 = !result_4;
 		};
 
 		rabbit.on('run', callback_1);
