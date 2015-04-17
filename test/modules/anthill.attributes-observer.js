@@ -145,7 +145,6 @@
 		};
 
 		callbacks[2] = function (davent) {
-			console.log(davent);
 			results[2] = davent.eventPath === 'test_4.array' &&
 						 davent.path === 'test_4.array.length' &&
 						 davent.old === 6 &&
@@ -153,9 +152,9 @@
 		};
 
 		callbacks[3] = function (davent) {
-			results[3] = davent.eventPath === 'test_4.array.{1}' &&
+			results[3] = davent.eventPath === 'test_4.array.length' &&
 						 davent.path === 'test_4.array.length' &&
-						 davent.old instanceof Ai.Unknow &&
+						 davent.old === 6 &&
 						 davent.cur === 151;
 		};
 

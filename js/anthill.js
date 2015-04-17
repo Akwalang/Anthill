@@ -763,26 +763,46 @@
 		};
 
 		attrs.set = function (path, value) {
-			var name, events,
-				args = arguments,
-				old = Attributes.fn.set.apply(this, args);
+			var old, name, names, events,
+				lengthPath, oldLength, curLength,
+				last, isArray;
 
-			if (!Tools.isPlainObject(path)) {
-				events = this._match('change', path, value, old);
+			if (Tools.isPlainObject(path)) {
+				old = {};
 
-				this.notify(events);
+				for (name in path) {
+					if (!_hasOwnProperty(path, name)) {
+						continue;
+					}
+
+					old[name] = this.set(name, path[name]);
+				}
 
 				return old;
 			}
 
-			for (name in path) {
-				if(!_hasOwnProperty.call(path, name)) {
-					continue;
+			names = Attributes.split(path);
+			last = names.pop();
+
+			isArray = Attributes.isDynamicIndex(last) || Attributes.isStaticIndex(last);
+
+			if (isArray) {
+				lengthPath = Attributes.join(names.concat('length'));
+				oldLength = this.get(lengthPath);
+			}
+
+			old = Attributes.fn.set.call(this, path, value);
+
+			events = this._match('change', path, value, old);
+			this.notify(events);
+
+			if (isArray) {
+				curLength = this.get(Attributes.join(names.concat('length')))
+
+				if (oldLength !== curLength) {
+					events = this._match('change', lengthPath, curLength, oldLength);
+					this.notify(events);
 				}
-
-				events = this._match('change', name, path[name], old[name]);
-
-				this.notify(events);
 			}
 
 			return old;
@@ -971,42 +991,6 @@
 			return events;
 		};
 
-		// for array length
-		self._sibling = function (type, path, cur, old) {
-			var last, index, length, _path,
-				events = [], list = this._events.change,
-				names = Attributes.split(path);
-
-			last = names.pop();
-
-			if (!Attributes.isStaticIndex(last)) {
-				return events;
-			}
-
-			_path = Attributes.join(names.concat('length'));
-
-			if (list[_path] === undefined) {
-				return events;
-			}
-
-			index = this._getDynamicKey(Attributes.join(names), last.slice(1, -1));
-			length = this.get(_path);
-
-			if (index + 1 !== length) {
-				return events;
-			}
-
-			events.push({
-				old: new Unknow(),
-				cur: length,
-				path: _path,
-				eventPath: path,
-				type: 'change'
-			});
-
-			return events;
-		};
-
 		self._propagation = function (type, path, cur, old) {
 			var _path, _cur, _old, _subname, 
 				d_path_1, d_path_2,
@@ -1046,10 +1030,9 @@
 			path = this._getStaticPath(path);
 
 			var capture = self._capture.call(this, type, path, cur, old),
-				sibling = self._sibling.call(this, type, path, cur, old),
 				propagation = self._propagation.call(this, type, path, cur, old);
 
-			var i, len, name, events = [].concat(capture, sibling, propagation);
+			var i, len, name, events = [].concat(capture, propagation);
 
 			if (Tools.isPlainObject(customData)) {
 				for (i = 0, len = events.length; i < len; i++) {
