@@ -771,7 +771,7 @@
 				old = {};
 
 				for (name in path) {
-					if (!_hasOwnProperty(path, name)) {
+					if (!_hasOwnProperty.call(path, name)) {
 						continue;
 					}
 
