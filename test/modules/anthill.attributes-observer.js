@@ -508,7 +508,201 @@
 
 		ok(_.every(results), '[' + results.join(', ') + ']');
 
-		window.rabbit = rabbit;
+		/* Merge */
+		callbacks = [];
+
+		callbacks[0] = function (davent) {
+			results[0] = davent.eventPath === 'test_5' &&
+						 davent.path === 'test_5.item_1' &&
+						 davent.old === 1 &&
+						 davent.cur === 5;
+		};
+
+		callbacks[1] = function (davent) {
+			results[1] = false;
+		};
+
+		callbacks[2] = function (davent) {
+			results[2] = davent.eventPath === 'test_5' &&
+						 davent.path === 'test_5.item_3' &&
+						 _.isEqual(davent.old, [1, 2, 3, 4, 5]) &&
+						 _.isEqual(davent.cur, ['+', '-', '=']);
+		};
+
+		callbacks[3] = function (davent) {
+			results[3] = davent.eventPath === 'test_5' &&
+						 davent.path === 'test_5.item_4.sub_3.{0}' &&
+						 davent.old === 'r' &&
+						 davent.cur === '!';
+		};
+
+		callbacks[4] = function (davent) {
+			results[4] = davent.eventPath === 'test_5' &&
+						 davent.path === 'test_5.item_4.sub_3.length' &&
+						 davent.old === 6 &&
+						 davent.cur === 8;
+		};
+
+		rabbit.set('test_5', {
+			item_1: 1,
+			item_2: 'test',
+			item_3: [1, 2, 3, 4, 5],
+			item_4: {
+				sub_1: 2,
+				sub_2: 'test 2',
+				sub_3: ['q', 'w', 'e', 'r', 't', 'y']
+			}
+		});
+
+		results = [false, true, false, false, false];
+
+		sk = rabbit._getStaticKey('test_5.item_4.sub_3', 3);
+
+		rabbit.on('change', 'test_5.item_1', callbacks[0]);
+		rabbit.on('change', 'test_5.item_2', callbacks[1]);
+		rabbit.on('change', 'test_5.item_3', callbacks[2]);
+		rabbit.on('change', 'test_5.item_4.sub_3.{' + sk + '}', callbacks[3]);
+		rabbit.on('change', 'test_5.item_4.sub_3.length', callbacks[4]);
+
+		rabbit.merge('test_5', {
+			item_1: 5,
+			item_2: 'test',
+			item_3: ['+', '-', '='],
+			item_4: {
+				sub_1: 6,
+				sub_2: 'test 3',
+				sub_3: {
+					3: '!',
+					5: '$',
+					7: '&'
+				}
+			}
+		});
+
+		rabbit.off('change', 'test_5.item_1', callbacks[0]);
+		rabbit.off('change', 'test_5.item_2', callbacks[1]);
+		rabbit.off('change', 'test_5.item_3', callbacks[2]);
+		rabbit.off('change', 'test_5.item_4.sub_3.{' + sk + '}', callbacks[3]);
+		rabbit.off('change', 'test_5.item_4.sub_3.length', callbacks[4]);
+
+		ok(_.every(results), '[' + results.join(', ') + ']');
+	});
+
+	test('.on(\'splice\', path, callback)', function () {
+		var results, callbacks, rabbit = new Ant();
+
+		/* Accurate path */
+		results = [];
+		callbacks = [];
+
+		callbacks[0] = function (davent) {
+			results[0] = davent.eventPath === 'test_1.array' &&
+						 davent.path === 'test_1.array' &&
+						 davent.from === 2 &&
+						 davent.added === 2 &&
+						 davent.removed === 3 &&
+						 _.isEqual(davent.old, {2: 'e', 3: 'r', 4: 't'}) &&
+						 _.isEqual(davent.cur, {2: 'a', 3: 's'});
+		};
+
+		rabbit.set('test_1.array', ['q', 'w', 'e', 'r', 't', 'y']);
+		rabbit.on('splice', 'test_1.array', callbacks[0]);
+		results[0] = false;
+		rabbit.splice('test_1.array', 2, 3, 'a', 's');
+		rabbit.off('splice', 'test_1.array', callbacks[0]);
+
+		ok(_.every(results), '[' + results.join(', ') + ']');
+	});
+
+	test('.on(\'displace\', path, callback)', function () {
+		var results, callbacks, sk, rabbit = new Ant();
+
+		var sorter = function (a, b) {
+			if (a > b) return 1;
+			if (a < b) return -1;
+			return 0;
+		};
+
+		results = [];
+		callbacks = [];
+
+		callbacks[0] = function (davent) {
+			results[0] = davent.eventPath === 'test_1.array' &&
+						 davent.path === 'test_1.array.{0}' &&
+						 davent.old === 3 &&
+						 davent.cur === 5;
+		};
+
+		callbacks[1] = function (davent) {
+			results[1] = false;
+		};
+
+		callbacks[2] = function (davent) {
+			results[2] = davent.eventPath === 'test_3.array' &&
+						 davent.path === 'test_3.array.{0}' &&
+						 davent.old === 1 &&
+						 davent.cur === 4;
+		};
+
+		rabbit.set('test_1.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		sk = rabbit._getStaticKey('test_1.array', 3);
+
+		rabbit.on('displace', 'test_1.array.{' + sk + '}', callbacks[0]);
+		results[0] = false;
+		rabbit.splice('test_1.array', 2, 1, 'a', 's', 'd');
+		rabbit.off('displace', 'test_1.array.{' + sk + '}', callbacks[0]);
+
+
+		rabbit.set('test_2.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		sk = rabbit._getStaticKey('test_2.array', 3);
+
+		rabbit.on('displace', 'test_2.array.{' + sk + '}', callbacks[1]);
+		results[1] = true;
+		rabbit.splice('test_2.array', 2, 2, 'a', 's', 'd');
+		rabbit.off('displace', 'test_2.array.{' + sk + '}', callbacks[1]);
+
+
+		rabbit.set('test_3.array', ['q', 'w', 'e', 'r', 't', 'y']);
+
+		sk = rabbit._getStaticKey('test_3.array', 1);
+
+		rabbit.on('displace', 'test_3.array.{' + sk + '}', callbacks[2]);
+		results[2] = false;
+		rabbit.sort('test_3.array', sorter);
+		rabbit.off('displace', 'test_3.array.{' + sk + '}', callbacks[2]);
+
+		ok(_.every(results), '[' + results.join(', ') + ']');
+	});
+
+	test('.on(\'sort\', path, callback)', function () {
+		var results, callbacks, sk, rabbit = new Ant();
+
+		var sorter = function (a, b) {
+			if (a > b) return 1;
+			if (a < b) return -1;
+			return 0;
+		};
+
+		results = [];
+		callbacks = [];
+
+		callbacks[0] = function (davent) {
+			results[0] = davent.eventPath === 'test_1.array' &&
+						 davent.path === 'test_1.array' &&
+						 _.isEqual(davent.map, [2, 0, 3, 4, 1, 5]) &&
+						 _.isEqual(davent.old, ['q', 'w', 'e', 'r', 't', 'y']) &&
+						 _.isEqual(davent.cur, ['e', 'q', 'r', 't', 'w', 'y']);
+		};
+
+		results[0] = false;
+		rabbit.set('test_1.array', ['q', 'w', 'e', 'r', 't', 'y']);
+		rabbit.on('sort', 'test_1.array', callbacks[0]);
+		rabbit.sort('test_1.array', sorter);
+		rabbit.off('sort', 'test_1.array', callbacks[0]);
+
+		ok(_.every(results), '[' + results.join(', ') + ']');
 	});
 
 })(Anthill, _);
