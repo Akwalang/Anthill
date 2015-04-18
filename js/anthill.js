@@ -399,7 +399,7 @@
 			return old;
 		};
 
-		fn.merge = function (path, ext) {
+		fn.merge = function (path, ext, clone) {
 			var space;
 
 			if (Tools.isPlainObject(path)) {
@@ -407,7 +407,9 @@
 				path = '';
 			}
 
-			ext = _cloneDeep(ext);
+			if (clone !== false) {
+				ext = _cloneDeep(ext);
+			}
 
 			space = this.get(path);
 
@@ -808,15 +810,19 @@
 			return old;
 		};
 
-		attrs.merge = function (path, obj) {
+		attrs.merge = function (path, ext, clone) {
 			if (Tools.isPlainObject(path)) {
-				obj = path;
+				ext = path;
 				path = '';
 			}
 
-			var old = Attributes.fn.merge.call(this, path, obj);
+			if (clone !== false) {
+				ext = _cloneDeep(ext);
+			}
 
-			var events = this._match('change', path, obj, old);
+			var old = Attributes.fn.merge.call(this, path, ext, false);
+
+			var events = this._match('change', path, ext, old);
 
 			this.notify(events);
 
