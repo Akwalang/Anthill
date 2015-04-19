@@ -538,7 +538,7 @@ TODO:
 
 				parent.childs = {};
 
-				while (block = this.stream.shift()) {
+				while ((block = this.stream.shift()) !== undefined) {
 					type = self.matchType(block);
 
 					if (type === TYPE_BLOCK_CLOSE) {
