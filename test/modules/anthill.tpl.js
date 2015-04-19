@@ -7,7 +7,7 @@
 
 	var box = $('<div />', {id: 'mount-point'});
 
-	// box.appendTo(document.body);
+	box.appendTo(document.body);
 
 	var create = function (html, data) {
 		var tpl = new TPL(html);
@@ -114,6 +114,70 @@
 
 		results[2] = box.find('.binded').text() === 'It is false';
 		results[3] = box.find('.unbinded').text() === 'It is true';
+
+		tpl.hide();
+
+		ok(_.every(results), '[' + results.join(', ') + ']');
+	});
+
+	test('if elseif else', function () {
+		var results, model, html, tpl;
+		
+		results = [];
+
+		model = new Model({
+			swither: 0
+		});
+
+		html = [
+			'{{#if "{model#swither} === 0"}}',
+				'Block 0',
+			'{{elseif "{model#swither} === 1"}}',
+				'Block 1',
+			'{{elseif "{model#swither} === 2"}}',
+				'Block 2',
+			'{{else}}',
+				'Block 3',
+			'{{/if}}'
+		].join('');
+
+		tpl = create(html, {model: model});
+
+		tpl.appendTo(box);
+
+		results[0] = box.text() === 'Block 0';
+
+		model.set('swither', 1);
+
+		results[1] = box.text() === 'Block 1';
+
+		model.set('swither', 2);
+
+		results[2] = box.text() === 'Block 2';
+
+		model.set('swither', 100);
+
+		results[3] = box.text() === 'Block 3';
+
+		model.set('swither', 1);
+
+		results[4] = box.text() === 'Block 1';
+
+		model.set('swither', 2);
+
+		results[5] = box.text() === 'Block 2';
+
+		model.set('swither', 0);
+
+		results[6] = box.text() === 'Block 0';
+
+		model.set('swither', 2);
+
+		results[7] = box.text() === 'Block 2';
+
+		model.set('swither', 1000);
+
+		results[8] = box.text() === 'Block 3';
 
 		tpl.hide();
 
