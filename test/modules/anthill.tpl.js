@@ -184,4 +184,57 @@
 		ok(_.every(results), '[' + results.join(', ') + ']');
 	});
 
+	test('each', function () {
+		var results, model, html, tpl;
+
+		var sorter = function (a, b) {
+			if (a > b) return 1;
+			if (a < b) return -1;
+			return 0;
+		};
+
+		results = [];
+
+		model = new Model({
+			list: ['q', 'w', 'e', 'r', 't', 'y']
+		});
+
+		html = [
+			'<ul>',
+				'{{#each "{model#list} as index, value"}}',
+					'<li>',
+						'{{index}}: {{value}}',
+					'</li>',
+				'{{/each}}',
+			'</ul>'
+		].join('');
+
+		tpl = create(html, {model: model});
+
+		tpl.appendTo(box);
+
+		box.find('li').each(function (index) {
+			var res = $(this).text() === index + ': ' + model.list[index];
+			results.push(res);
+		});
+
+		model.splice('list', 1, 1, 'a');
+
+		box.find('li').each(function (index) {
+			var res = $(this).text() === index + ': ' + model.list[index];
+			results.push(res);
+		});
+
+		model.sort('list', sorter);
+
+		box.find('li').each(function (index) {
+			var res = $(this).text() === index + ': ' + ['a', 'e', 'q', 'r', 't', 'y'][index];
+			results.push(res);
+		});
+
+		tpl.hide();
+
+		ok(_.every(results), '[' + results.join(', ') + ']');
+	});
+
 })(Anthill, Anthill.TPL, jQuery, _);
