@@ -184,7 +184,7 @@
 		ok(_.every(results), '[' + results.join(', ') + ']');
 	});
 
-	test('each', function () {
+	test('each [array]', function () {
 		var results, model, html, tpl;
 
 		var sorter = function (a, b) {
@@ -229,6 +229,50 @@
 
 		box.find('li').each(function (index) {
 			var res = $(this).text() === index + ': ' + ['a', 'e', 'q', 'r', 't', 'y'][index];
+			results.push(res);
+		});
+
+		tpl.hide();
+
+		ok(_.every(results), '[' + results.join(', ') + ']');
+	});
+
+	test('each [object]', function () {
+		var results, model, html, tpl;
+
+		results = [];
+
+		model = new Model({
+			list: {q: 1, w: 2, e: 3, r: 4, t: 5, y: 6}
+		});
+
+		html = [
+			'<ul>',
+				'{{#each "{model#list} as key, value"}}',
+					'<li>',
+						'{{key}}: {{value}}',
+					'</li>',
+				'{{/each}}',
+			'</ul>'
+		].join('');
+
+		tpl = create(html, {model: model});
+
+		tpl.appendTo(box);
+
+		var checks = ['q: 1', 'w: 2', 'e: 3', 'r: 4', 't: 5', 'y: 6'];
+
+		box.find('li').each(function (index) {
+			var res = $(this).text() === checks[index];
+			results.push(res);
+		});
+
+		model.set('list.a', 15);
+
+		checks.push('a: 15');
+
+		box.find('li').each(function (index) {
+			var res = $(this).text() === checks[index];
 			results.push(res);
 		});
 
